@@ -16,24 +16,21 @@ after_initialize do
       field = UserField.find_by(name: "language")
 
       if field.nil?
-        field = UserField.create!(
-          name: "language",
-          field_type: UserField::TYPES[:dropdown],
-          editable: true,
-          required: true,
-          show_on_profile: false,
-          show_on_user_card: false,
-          show_on_signup: true
-        )
-      
-        %w[English Swedish].each_with_index do |option, idx|
-          UserFieldOption.create!(
-            user_field: field,
-            value: option,
-            position: idx
+        field =
+          UserField.create!(
+            name: "language",
+            field_type: UserField::TYPES[:dropdown],
+            editable: true,
+            required: true,
+            show_on_profile: false,
+            show_on_user_card: false,
+            show_on_signup: true,
           )
+
+        %w[English Swedish].each_with_index do |option, idx|
+          UserFieldOption.create!(user_field: field, value: option, position: idx)
         end
-      
+
         Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
       else
         Rails.logger.info "[preferred-language-on-setup] Custom user field 'language' already exists."
