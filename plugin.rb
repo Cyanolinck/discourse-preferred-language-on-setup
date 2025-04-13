@@ -12,21 +12,22 @@ enabled_site_setting :preferred_language_on_setup_enabled
 
 after_initialize do
   if SiteSetting.preferred_language_on_setup_enabled
-    # ✅ Patch enum dynamically if not defined
-    unless UserField.respond_to?(:field_types)
-      UserField.class_eval do
-        enum field_type: { text: 0, email: 1, url: 2, multiselect: 3, dropdown: 4 }
-      end
-    end
-
     begin
       field = UserField.find_by(name: "language")
 
       if field.nil?
+        # Safely access dropdown enum value or fall back to hardcoded value
+        field_type =
+          begin
+            UserField.field_types[:dropdown]
+          rescue StandardError
+            4 # fallback for dropdown
+          end
+
         field =
           UserField.create!(
             name: "language",
-            field_type: UserField.field_types[:dropdown],
+            field_type: field_type,
             editable: true,
             required: true,
             show_on_profile: false,
@@ -46,7 +47,6 @@ after_initialize do
       Rails.logger.error "[preferred-language-on-setup] Failed to create or find user field: #{e.message}"
     end
 
-    # ✅ Set user locale after creation
     on(:user_created) do |user|
       begin
         field = UserField.find_by(name: "language")
