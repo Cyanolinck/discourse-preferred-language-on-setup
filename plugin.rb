@@ -26,7 +26,9 @@ after_initialize do
 
       locale_map = {
         "English" => "en",
-        "Swedish" => "sv"
+        "Swedish" => "sv",
+        "Engelska" => "en",
+        "Svenska" => "sv"
       }
 
       if locale_map[value]
