@@ -1,1 +1,3 @@
 en:
+  discourse_preferred_language_on_setup:
+    preferred_language_on_setup_enabled: "Enable automatic locale setting from user field"

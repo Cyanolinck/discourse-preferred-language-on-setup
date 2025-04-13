@@ -3,7 +3,7 @@ en:
     admin:
       site_settings:
         categories:
-          TODO_plugin_name: "Plugin Name"
+          discourse_preferred_language_on_setup: "Preferred Language on Signup"
   js:
-    discourse_plugin_name:
-      placeholder: placeholder
+    plugin:
+      discourse_preferred_language_on_setup: {}

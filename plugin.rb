@@ -13,28 +13,30 @@ enabled_site_setting :preferred_language_on_setup_enabled
 after_initialize do
   if SiteSetting.preferred_language_on_setup_enabled
     begin
-      field_name = "language"
-      field = UserField.find_by(name: field_name)
+      field = UserField.find_by(name: "language")
 
       if field.nil?
-        field =
-          UserField.create!(
-            name: field_name,
-            field_type: UserField.types[:dropdown],
-            editable: true,
-            required: true,
-            show_on_profile: false,
-            show_on_user_card: false,
-            show_on_signup: true,
-          )
-
+        field = UserField.create!(
+          name: "language",
+          field_type: UserField::TYPES[:dropdown],
+          editable: true,
+          required: true,
+          show_on_profile: false,
+          show_on_user_card: false,
+          show_on_signup: true
+        )
+      
         %w[English Swedish].each_with_index do |option, idx|
-          UserFieldOption.create!(user_field: field, value: option, position: idx)
+          UserFieldOption.create!(
+            user_field: field,
+            value: option,
+            position: idx
+          )
         end
-
-        Rails.logger.info "[preferred-language-on-setup] Created custom user field '#{field_name}' with dropdown options."
+      
+        Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
       else
-        Rails.logger.info "[preferred-language-on-setup] Custom user field '#{field_name}' already exists."
+        Rails.logger.info "[preferred-language-on-setup] Custom user field 'language' already exists."
       end
     rescue => e
       Rails.logger.error "[preferred-language-on-setup] Failed to create or find user field: #{e.message}"
