@@ -22,12 +22,13 @@ after_initialize do
         field =
           UserField.create!(
             name: "language",
+            description: "Your preferred interface language",
             field_type: field_type,
             editable: true,
             required: true,
             show_on_profile: false,
             show_on_user_card: false,
-            show_on_signup: true,
+            requirement: 2, #aka show_on_signup: true,
           )
 
         %w[English Swedish].each_with_index do |option, idx|
