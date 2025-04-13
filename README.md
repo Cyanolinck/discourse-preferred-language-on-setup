@@ -1,3 +1,7 @@
+# DO NOT USE THIS CODE YET!
+This is not even in alpha. It's not in a working stage.
+I'm currently pushing non functial commits and then trying them out.
+
 # Discourse Preferred Language on Setup Plugin
 
 Automatically sets a user's interface language based on their selected language during account creation.

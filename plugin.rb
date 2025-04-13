@@ -12,18 +12,18 @@ enabled_site_setting :preferred_language_on_setup_enabled
 
 after_initialize do
   if SiteSetting.preferred_language_on_setup_enabled
+    # ✅ Safely resolve dropdown enum value once
+    field_type =
+      begin
+        UserField.field_types[:dropdown]
+      rescue StandardError
+        4 # fallback for dropdown
+      end
+
     begin
       field = UserField.find_by(name: "language")
 
       if field.nil?
-        # Safely access dropdown enum value or fall back to hardcoded value
-        field_type =
-          begin
-            UserField.field_types[:dropdown]
-          rescue StandardError
-            4 # fallback for dropdown
-          end
-
         field =
           UserField.create!(
             name: "language",
