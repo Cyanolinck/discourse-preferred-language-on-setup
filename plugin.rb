@@ -3,7 +3,7 @@
 # name: discourse-preferred-language-on-setup
 # about: Automatically sets a user's interface language based on a custom user field completed during signup.
 # meta_topic_id: 0
-# version: 0.0.1
+# version: 0.0.2
 # authors: Lincken
 # url: https://github.com/Cyanolinck/discourse-preferred-language-on-setup
 # required_version: 2.7.0
@@ -11,35 +11,68 @@
 enabled_site_setting :preferred_language_on_setup_enabled
 
 after_initialize do
-  on(:user_created) do |user|
+  if SiteSetting.preferred_language_on_setup_enabled
     begin
-      # Adjust the name below to match your actual custom user field name
-      field = UserField.find_by(name: "språk")
-      next unless field
+      field_name = "language"
+      field = UserField.find_by(name: field_name)
 
-      value = UserCustomField.find_by(
-        user_id: user.id,
-        name: "user_field_#{field.id}"
-      )&.value
+      if field.nil?
+        field = UserField.create!(
+          name: field_name,
+          field_type: UserField.types[:dropdown],
+          editable: true,
+          required: true,
+          show_on_profile: false,
+          show_on_user_card: false,
+          show_on_signup: true
+        )
 
-      next if value.blank?
+        %w[English Swedish].each_with_index do |option, idx|
+          UserFieldOption.create!(
+            user_field: field,
+            value: option,
+            position: idx
+          )
+        end
 
-      locale_map = {
-        "English" => "en",
-        "Swedish" => "sv",
-        "Engelska" => "en",
-        "Svenska" => "sv"
-      }
-
-      if locale_map[value]
-        user.locale = locale_map[value]
-        user.save!
-        Rails.logger.info "[preferred-language-on-setup] Set locale '#{user.locale}' for user '#{user.username}'"
+        Rails.logger.info "[preferred-language-on-setup] Created custom user field '#{field_name}' with dropdown options."
       else
-        Rails.logger.warn "[preferred-language-on-setup] No locale match for '#{value}'"
+        Rails.logger.info "[preferred-language-on-setup] Custom user field '#{field_name}' already exists."
       end
     rescue => e
-      Rails.logger.error "[preferred-language-on-setup] Failed to set locale for user #{user.username}: #{e.message}"
+      Rails.logger.error "[preferred-language-on-setup] Failed to create or find user field: #{e.message}"
+    end
+
+    # Hook to set user locale
+    on(:user_created) do |user|
+      begin
+        field = UserField.find_by(name: "language")
+        next unless field
+
+        raw_value = UserCustomField.find_by(
+          user_id: user.id,
+          name: "user_field_#{field.id}"
+        )&.value
+
+        next if raw_value.blank?
+
+        value = raw_value.strip.downcase
+
+        locale_map = {
+          "english" => "en",
+          "swedish" => "sv"
+        }
+
+        if locale_map[value]
+          user.locale = locale_map[value]
+          user.save!
+          Rails.logger.info "[preferred-language-on-setup] Set locale '#{user.locale}' for user '#{user.username}'"
+        else
+          Rails.logger.warn "[preferred-language-on-setup] No locale match for '#{raw_value}'"
+        end
+      rescue => e
+        Rails.logger.error "[preferred-language-on-setup] Failed to set locale for user #{user.username}: #{e.message}"
+      end
     end
   end
 end
