@@ -17,22 +17,19 @@ after_initialize do
       field = UserField.find_by(name: field_name)
 
       if field.nil?
-        field = UserField.create!(
-          name: field_name,
-          field_type: UserField.types[:dropdown],
-          editable: true,
-          required: true,
-          show_on_profile: false,
-          show_on_user_card: false,
-          show_on_signup: true
-        )
+        field =
+          UserField.create!(
+            name: field_name,
+            field_type: UserField.types[:dropdown],
+            editable: true,
+            required: true,
+            show_on_profile: false,
+            show_on_user_card: false,
+            show_on_signup: true,
+          )
 
         %w[English Swedish].each_with_index do |option, idx|
-          UserFieldOption.create!(
-            user_field: field,
-            value: option,
-            position: idx
-          )
+          UserFieldOption.create!(user_field: field, value: option, position: idx)
         end
 
         Rails.logger.info "[preferred-language-on-setup] Created custom user field '#{field_name}' with dropdown options."
@@ -49,19 +46,13 @@ after_initialize do
         field = UserField.find_by(name: "language")
         next unless field
 
-        raw_value = UserCustomField.find_by(
-          user_id: user.id,
-          name: "user_field_#{field.id}"
-        )&.value
+        raw_value = UserCustomField.find_by(user_id: user.id, name: "user_field_#{field.id}")&.value
 
         next if raw_value.blank?
 
         value = raw_value.strip.downcase
 
-        locale_map = {
-          "english" => "en",
-          "swedish" => "sv"
-        }
+        locale_map = { "english" => "en", "swedish" => "sv" }
 
         if locale_map[value]
           user.locale = locale_map[value]
