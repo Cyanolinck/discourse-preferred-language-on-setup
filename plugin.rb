@@ -3,10 +3,12 @@
 # name: discourse-preferred-language-on-setup
 # about: Automatically sets a user's interface language based on a custom user field completed during signup.
 # meta_topic_id: 0
-# version: 0.0.2
+# version: 0.0.3
 # authors: Lincken
 # url: https://github.com/Cyanolinck/discourse-preferred-language-on-setup
 # required_version: 2.7.0
+
+require "yaml"
 
 enabled_site_setting :preferred_language_on_setup_enabled
 
@@ -28,10 +30,24 @@ after_initialize do
             required: true,
             show_on_profile: false,
             show_on_user_card: false,
-            requirement: 2, #aka show_on_signup: true,
+            requirement: 2, # aka show_on_signup: true
           )
 
-        %w[English Swedish].each_with_index do |option, idx|
+        # Load language options from config file or fallback
+        language_config_path = File.expand_path("../config/languages.yml", __FILE__)
+        language_options = []
+
+        if File.exist?(language_config_path)
+          yaml = YAML.load_file(language_config_path)
+          language_options = yaml["languages"] || []
+        else
+          Rails.logger.warn(
+            "[preferred-language-on-setup] Language config file not found. Defaulting to English and Swedish.",
+          )
+          language_options = ["English (US)", "Swedish"]
+        end
+
+        language_options.each_with_index do |option, idx|
           UserFieldOption.create!(user_field: field, value: option, position: idx)
         end
 
