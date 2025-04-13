@@ -1,4 +1,5 @@
-TODO_plugin_name:
-  plugin_name_enabled:
-    default: false
-    client: true
+discourse_preferred_language_on_setup:
+  preferred_language_on_setup_enabled:
+    default: true
+    client: false
+    type: bool
