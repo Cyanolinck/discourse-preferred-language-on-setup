@@ -14,10 +14,10 @@ after_initialize do
   if SiteSetting.preferred_language_on_setup_enabled
     # ✅ Safely resolve dropdown enum value once
     field_type =
-      begin
-        UserField.field_types[:dropdown]
-      rescue StandardError
-        4 # fallback for dropdown
+      if UserField.respond_to?(:field_types)
+        :dropdown
+      else
+        4 # fallback to enum value if field_types doesn't exist
       end
 
     begin
