@@ -69,7 +69,7 @@ after_initialize do
         next if raw_value.blank?
 
         value = raw_value.strip.downcase
-        locale_map = { "english" => "en", "swedish" => "sv" }
+        locale_map = { "English (US)" => "en", "swedish" => "sv" }
 
         if locale_map[value]
           user.locale = locale_map[value]
