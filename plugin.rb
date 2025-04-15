@@ -52,9 +52,7 @@ after_initialize do
         language_options = ["English (US)", "Swedish"]
       end
 
-      language_options.each do |option|
-        UserFieldOption.create!(user_field: field, value: option)
-      end
+      language_options.each { |option| UserFieldOption.create!(user_field: field, value: option) }
 
       Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
     rescue => e
