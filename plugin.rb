@@ -18,47 +18,50 @@ after_initialize do
     field_type = :dropdown
 
     begin
-      field = UserField.find_by(name: "language")
-
-      if field.nil?
-        field =
-          UserField.create!(
-            name: "language",
-            description: "Your preferred interface language",
-            field_type: field_type,
-            editable: true,
-            required: true,
-            show_on_profile: false,
-            show_on_user_card: false,
-            requirement: 2, # aka show_on_signup: true
-          )
-
-        # Load language options from config file or fallback
-        language_config_path = File.expand_path("../config/languages.yml", __FILE__)
-        language_options = []
-
-        if File.exist?(language_config_path)
-          yaml = YAML.load_file(language_config_path)
-          language_options = yaml["languages"] || []
-        else
-          Rails.logger.warn(
-            "[preferred-language-on-setup] Language config file not found. Defaulting to English and Swedish.",
-          )
-          language_options = ["English (US)", "Swedish"]
-        end
-
-        language_options.each_with_index do |option, idx|
-          UserFieldOption.create!(user_field: field, value: option, position: idx)
-        end
-
-        Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
-      else
-        Rails.logger.info "[preferred-language-on-setup] Custom user field 'language' already exists."
+      # 🔄 Remove old field if it exists
+      old_field = UserField.find_by(name: "language")
+      if old_field
+        Rails.logger.info "[preferred-language-on-setup] Deleting old 'language' user field..."
+        old_field.destroy
       end
+
+      # ✅ Create new user field
+      field =
+        UserField.create!(
+          name: "language",
+          description: "Your preferred interface language",
+          field_type: field_type,
+          editable: true,
+          required: true,
+          show_on_profile: false,
+          show_on_user_card: false,
+          requirement: 2, # aka show_on_signup: true
+        )
+
+      # Load language options from config file or fallback
+      language_config_path = File.expand_path("../config/languages.yml", __FILE__)
+      language_options = []
+
+      if File.exist?(language_config_path)
+        yaml = YAML.load_file(language_config_path)
+        language_options = yaml["languages"] || []
+      else
+        Rails.logger.warn(
+          "[preferred-language-on-setup] Language config file not found. Defaulting to English and Swedish.",
+        )
+        language_options = ["English (US)", "Swedish"]
+      end
+
+      language_options.each_with_index do |option|
+        UserFieldOption.create!(user_field: field, value: option)
+      end
+
+      Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
     rescue => e
       Rails.logger.error "[preferred-language-on-setup] Failed to create or find user field: #{e.message}"
     end
 
+    # 🔁 Locale logic for new users
     on(:user_created) do |user|
       begin
         field = UserField.find_by(name: "language")
