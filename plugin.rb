@@ -52,7 +52,7 @@ after_initialize do
         language_options = ["English (US)", "Swedish"]
       end
 
-      language_options.each_with_index do |option|
+      language_options.each do |option|
         UserFieldOption.create!(user_field: field, value: option)
       end
 
