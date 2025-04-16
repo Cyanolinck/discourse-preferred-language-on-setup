@@ -14,7 +14,7 @@ enabled_site_setting :preferred_language_on_setup_enabled
 
 after_initialize do
   if SiteSetting.preferred_language_on_setup_enabled
-    # ✅ Safely resolve dropdown enum value once
+    
     field_type = :dropdown
 
     begin
@@ -25,13 +25,13 @@ after_initialize do
         old_field.destroy
       end
 
-      # ✅ Create new user field
+      # Create new user field
       field =
         UserField.create!(
           name: "language",
           description: "Your preferred interface language",
           field_type: field_type,
-          editable: true,
+          editable: false,
           required: true,
           show_on_profile: false,
           show_on_user_card: false,
@@ -69,8 +69,16 @@ after_initialize do
         next if raw_value.blank?
 
         value = raw_value.strip.downcase
-        locale_map = { "english" => "en", "swedish" => "sv", "engelska" => "en", "svenska" => "sv" }
+        locale_map = {
+          "english" => "en",
+          "swedish" => "sv",
+          "engelska" => "en",
+          "svenska" => "sv",
+          "english (us)" => "en",
+          "swedish" => "sv"
+        }
 
+        Rails.logger.debug "[preferred-language-on-setup] Raw value: '#{raw_value}', Normalized: '#{value}'"
         if locale_map[value]
           user.locale = locale_map[value]
           user.save!
