@@ -26,6 +26,7 @@ after_initialize do
     end
 
   def self.sync_language_user_field(locale_map)
+    Rails.logger.info "[preferred-language-on-setup] locale_map has this in it:\n#{YAML.dump(locale_map)}"
     field_type = :dropdown
 
     field = UserField.find_or_initialize_by(name: "language")
@@ -38,13 +39,17 @@ after_initialize do
     field.requirement = 2 # show_on_signup: true
     field.save!
 
-    language_codes =
-      SiteSetting.preferred_language_on_setup_locales.split("|").map(&:strip)
-    language_options = language_codes.map { |code| locale_map[code] || code }
+    # This gives us the languages that has been selected in settings.yml e.g "en|sv|fr" and transforms them into ["en", "sv", "fr"]
+    selected_language_codes = SiteSetting.selected_languages.split("|")
+    Rails.logger.info "[preferred-language-on-setup] selected_languages: #{selected_language_codes}"
 
-    existing_options = field.user_field_options.pluck(:value)
-    to_add = language_options - existing_options
-    to_remove = existing_options - language_options
+    # Takes the selected_language_codes and transforms them into the full name of the language with the locale mapping table in locale_mappings.yml
+    selected_language_names = selected_language_codes.map { |code| locale_map[code] || code }
+
+    # Updates the language options in the user field
+    existing_languages = field.user_field_options.pluck(:value)
+    to_add = selected_language_names - existing_languages
+    to_remove = existing_languages - selected_language_names
 
     to_add.each { |value| UserFieldOption.create!(user_field: field, value: value) }
 
