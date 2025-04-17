@@ -1,13 +1,53 @@
-preferred_language_on_setup_enabled:
-  default: true
-  client: false
-  type: bool
+en:
+  preferred_language_on_setup_enabled:
+    default: true
+    client: false
+    type: bool
+    description: "Enable preferred language setup via user field on signup"
 
-preferred_language_on_setup_locales:
-  type: list
-  list_type: compact
-  default: ["en"]
-  client: false
-  choices:
-    - en
-    - sv
+  preferred_language_on_setup_locales:
+    type: list
+    default:
+      - en
+      - sv
+    choices:
+      - en
+      - sv
+      - fr
+      - de
+      - es
+      - it
+      - ja
+      - zh_CN
+      - ru
+      - ar
+      - pt
+      - tr
+      - nl
+      - ko
+      - pl
+      - uk
+      - vi
+      - hi
+      - he
+      - ro
+      - cs
+      - el
+      - fi
+      - no
+      - da
+      - hu
+      - id
+      - th
+      - bg
+      - ms
+      - sk
+      - sr
+      - hr
+      - lt
+      - lv
+      - et
+      - sl
+    client: false
+    description: "Select which languages will be available in the user field dropdown at signup"
+    
