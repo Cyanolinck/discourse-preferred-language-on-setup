@@ -13,81 +13,77 @@ require "yaml"
 enabled_site_setting :preferred_language_on_setup_enabled
 
 after_initialize do
-  if SiteSetting.preferred_language_on_setup_enabled
-    field_type = :dropdown
-
+  # 🌍 Load locale map from config file
+  locale_map =
     begin
-      # 🔄 Remove old field if it exists
-      old_field = UserField.find_by(name: "language")
-      if old_field
-        Rails.logger.info "[preferred-language-on-setup] Deleting old 'language' user field..."
-        old_field.destroy
-      end
-
-      # Create new user field
-      field =
-        UserField.create!(
-          name: "language",
-          description: "Your preferred interface language",
-          field_type: field_type,
-          editable: false,
-          required: true,
-          show_on_profile: false,
-          show_on_user_card: false,
-          requirement: 2, # aka show_on_signup: true
-        )
-
-      # Load language options from config file or fallback
-      language_config_path = File.expand_path("../config/languages.yml", __FILE__)
-      language_options = []
-
-      if File.exist?(language_config_path)
-        yaml = YAML.load_file(language_config_path)
-        language_options = yaml["languages"] || []
-      else
-        Rails.logger.warn(
-          "[preferred-language-on-setup] Language config file not found. Defaulting to English and Swedish.",
-        )
-        language_options = ["English (US)", "Swedish"]
-      end
-
-      language_options.each { |option| UserFieldOption.create!(user_field: field, value: option) }
-
-      Rails.logger.info "[preferred-language-on-setup] Created custom user field 'language' with dropdown options."
+      path = File.expand_path("../config/locale_mappings.yml", __FILE__)
+      YAML.load_file(path) || {}
     rescue => e
-      Rails.logger.error "[preferred-language-on-setup] Failed to create or find user field: #{e.message}"
+      Rails.logger.warn(
+        "[preferred-language-on-setup] Failed to load locale_mappings.yml: #{e.message}",
+      )
+      {}
     end
 
-    # 🔁 Locale logic for new users
-    on(:user_created) do |user|
-      begin
-        field = UserField.find_by(name: "language")
-        next unless field
+  def self.sync_language_user_field(locale_map)
+    field_type = :dropdown
 
-        raw_value = UserCustomField.find_by(user_id: user.id, name: "user_field_#{field.id}")&.value
-        next if raw_value.blank?
+    field = UserField.find_or_initialize_by(name: "language")
+    field.description = "Your preferred interface language"
+    field.field_type = field_type
+    field.editable = false
+    field.required = true
+    field.show_on_profile = false
+    field.show_on_user_card = false
+    field.requirement = 2 # show_on_signup: true
+    field.save!
 
-        value = raw_value.strip.downcase
-        locale_map = {
-          "english" => "en",
-          "swedish" => "sv",
-          "engelska" => "en",
-          "svenska" => "sv",
-          "english (us)" => "en",
-          "swedish" => "sv",
-        }
+    language_codes = SiteSetting.preferred_language_on_setup_locales.split("|").map(&:strip)
+    language_options = language_codes.map { |code| locale_map[code] || code }
 
-        Rails.logger.debug "[preferred-language-on-setup] Raw value: '#{raw_value}', Normalized: '#{value}'"
-        if locale_map[value]
-          user.locale = locale_map[value]
-          user.save!
-          Rails.logger.info "[preferred-language-on-setup] Set locale '#{user.locale}' for user '#{user.username}'"
-        else
-          Rails.logger.warn "[preferred-language-on-setup] No locale match for '#{raw_value}'"
-        end
-      rescue => e
-        Rails.logger.error "[preferred-language-on-setup] Failed to set locale for user #{user.username}: #{e.message}"
+    existing_options = field.user_field_options.pluck(:value)
+    to_add = language_options - existing_options
+    to_remove = existing_options - language_options
+
+    to_add.each { |value| UserFieldOption.create!(user_field: field, value: value) }
+
+    field.user_field_options.where(value: to_remove).destroy_all
+
+    Rails.logger.info "[preferred-language-on-setup] Synced user field 'language' — added: #{to_add}, removed: #{to_remove}"
+  end
+
+  sync_language_user_field(locale_map) if SiteSetting.preferred_language_on_setup_enabled
+
+  DiscourseEvent.on(:site_setting_changed) do |name, _old_value, _new_value|
+    if name.to_s == "preferred_language_on_setup_locales"
+      Rails.logger.info "[preferred-language-on-setup] Site setting changed, syncing user field..."
+      sync_language_user_field(locale_map)
+    end
+  end
+
+  # 🔁 Set locale for new users based on selected language
+  on(:user_created) do |user|
+    begin
+      field = UserField.find_by(name: "language")
+      next unless field
+
+      raw_value = UserCustomField.find_by(user_id: user.id, name: "user_field_#{field.id}")&.value
+      next if raw_value.blank?
+
+      value = raw_value.strip.downcase
+      reverse_map = locale_map.invert.transform_keys(&:downcase)
+
+      Rails.logger.debug "[preferred-language-on-setup] Raw value: '#{raw_value}', Normalized: '#{value}'"
+
+      if reverse_map[value]
+        user.locale = reverse_map[value]
+        user.save!
+        Rails.logger.info "[preferred-language-on-setup] Set locale '#{user.locale}' for user '#{user.username}'"
+      else
+        Rails.logger.warn "[preferred-language-on-setup] No locale match for '#{raw_value}'"
       end
+    rescue => e
+      Rails.logger.error "[preferred-language-on-setup] Failed to set locale for user #{user.username}: #{e.message}"
     end
   end
 end
