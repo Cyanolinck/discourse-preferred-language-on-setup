@@ -38,7 +38,7 @@ after_initialize do
     field.requirement = 2 # show_on_signup: true
     field.save!
 
-    language_codes = SiteSetting.preferred_language_on_setup_locales.split("|").map(&:strip)
+    language_codes = Array(SiteSetting.preferred_language_on_setup_locales).map { |code| code.to_s.strip }
     language_options = language_codes.map { |code| locale_map[code] || code }
 
     existing_options = field.user_field_options.pluck(:value)
