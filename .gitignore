@@ -1,3 +1,5 @@
 node_modules
 /gems
 /auto_generated
+.vscode/
+debug_plugin_test.rb

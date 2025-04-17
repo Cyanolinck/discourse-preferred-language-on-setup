@@ -8,7 +8,7 @@ en:
   selected_languages:
     type: list
     default:
-      - en
+      - "en"
     choices:
       - "en"
       - "sv"
