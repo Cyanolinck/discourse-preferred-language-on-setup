@@ -38,7 +38,7 @@ after_initialize do
     field.requirement = 2 # show_on_signup: true
     field.save!
 
-    language_codes = Array(SiteSetting.preferred_language_on_setup_locales).map(&:to_s).map(&:strip)
+    language_codes = SiteSetting.preferred_language_on_setup_locales.split("|").map(&:strip)
     language_options = language_codes.map { |code| locale_map[code] || code }
 
     existing_options = field.user_field_options.pluck(:value)
@@ -54,7 +54,7 @@ after_initialize do
 
   sync_language_user_field(locale_map) if SiteSetting.preferred_language_on_setup_enabled
 
-  on(:site_setting_changed) do |name, _old_value, _new_value|
+  DiscourseEvent.on(:site_setting_changed) do |name, _old_value, _new_value|
     if name.to_s == "preferred_language_on_setup_locales"
       Rails.logger.info "[preferred-language-on-setup] Site setting changed, syncing user field..."
       sync_language_user_field(locale_map)
