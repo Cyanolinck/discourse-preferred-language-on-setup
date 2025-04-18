@@ -1,12 +1,12 @@
-# DO NOT USE THIS CODE YET!
-This is not even in alpha. It's not in a working stage.
-I'm currently pushing non functial commits and then trying them out.
-
 # Discourse Preferred Language on Setup Plugin
 
 Automatically sets a user's interface language based on their selected language during account creation.
 
-This plugin adds a custom user field (`language`) as a dropdown, visible and required on signup. It then maps the selected value to a Discourse locale (e.g. `"English"` → `en`, `"Swedish"` → `sv`) and applies it to the user's interface language as soon as their account is created.
+This plugin adds a custom user field (`language`) as a dropdown, visible and required on signup.
+To change what languages will be shown for new users when creating an account,
+ go to Plugins > Installed Plugins > Preferred Language on Signup settings > Selected languages.
+
+Langugages manually added in the user field will be ignored. 
 
 ---
 
@@ -14,10 +14,6 @@ This plugin adds a custom user field (`language`) as a dropdown, visible and req
 
 - Adds a **required language selection field** to the signup form
 - Automatically sets `user.locale` on account creation
-- Supports English and Swedish out of the box
-- Easily extensible to support additional languages
-- Safe to run multiple times (idempotent field creation)
-- Designed for **Docker production installs** with support for hot-reload via `sv restart unicorn`
 
 ---
 

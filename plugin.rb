@@ -3,7 +3,7 @@
 # name: discourse-preferred-language-on-setup
 # about: Automatically sets a user's interface language based on a custom user field completed during signup.
 # meta_topic_id: 0
-# version: 0.0.3
+# version: 0.0.5
 # authors: Lincken
 # url: https://github.com/Cyanolinck/discourse-preferred-language-on-setup
 # required_version: 2.7.0
